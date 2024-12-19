@@ -8,32 +8,39 @@ import SignUpPage from './auth/sign-up/SignUpPage.jsx';
 import { ClerkProvider } from '@clerk/clerk-react';
 import Home from './pages/Home.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import LandingPage from './pages/LandingPage.jsx';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 const router = createBrowserRouter([
   {
+    path: '/', 
+    element: <LandingPage />
+  },
+  {
+    path: '/home', 
     element: <App />,
     children: [
       {
-        path: '/',
-        element: <Home />,
+        index: true,
+        element: <Home />, 
       },
       {
-        path: '/dashboard',
-        element: <Dashboard/>,
+        path: 'dashboard',
+        element: <Dashboard />,
       },
     ],
   },
   {
     path: 'auth/sign-in',
-    element: <SignInPage />
+    element: <SignInPage />,
   },
   {
     path: 'auth/sign-up',
-    element: <SignUpPage />
-  }
+    element: <SignUpPage />,
+  },
 ]);
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
