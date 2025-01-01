@@ -1,12 +1,7 @@
-import dotenv from 'dotenv';
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Load environment variables
-//dotenv.config();
-
-// Get the GEMINI API key from the backend's .env file
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-// Make sure GEMINI_API_KEY is defined in your backend .env
 
 const genAI = new GoogleGenerativeAI(apiKey);
 

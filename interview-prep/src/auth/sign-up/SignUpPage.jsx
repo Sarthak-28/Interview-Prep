@@ -15,7 +15,7 @@ const SignUpPage = () => {
 
       {/* Right Section: Clerk Sign-Up */}
       <div className="lg:w-1/2 w-full h-full flex items-center justify-center bg-white">
-        <SignUp afterSignUpUrl="/home" />
+        <SignUp afterSignUpUrl="/dashboard" />
       </div>
     </div>
   );

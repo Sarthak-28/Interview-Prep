@@ -1,16 +1,25 @@
-import { Outlet, Navigate, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
+import { useEffect } from 'react';
+import Loader from './components/Loader'; 
 
 function App() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded, user } = useUser();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  if (!isSignedIn && isLoaded && location.pathname !== '/auth/sign-in' && location.pathname !== '/auth/sign-up') {
-    return <Navigate to="/" />;
-  }
+  useEffect(() => {
+    if (isLoaded) {
+      if (isSignedIn && (location.pathname === '/' || location.pathname.startsWith('/auth'))) {
+        navigate('/dashboard', { replace: true });
+      } else if (!isSignedIn && location.pathname !== '/' && !location.pathname.startsWith('/auth')) {
+        navigate('/', { replace: true });
+      }
+    }
+  }, []);
 
-  if (isSignedIn && isLoaded && (location.pathname === '/auth/sign-in' || location.pathname === '/auth/sign-up')) {
-    return <Navigate to="/home" />;
+  if (!isLoaded) {
+    return <Loader />; 
   }
 
   return <Outlet />;

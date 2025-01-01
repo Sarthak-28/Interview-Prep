@@ -16,7 +16,7 @@ function SignInPage() {
 
       {/* Right Section: Clerk Sign-In */}
       <div className="lg:w-1/2 w-full h-full flex items-center justify-center bg-white">
-        <SignIn afterSignInUrl="/home" />
+        <SignIn afterSignInUrl="/dashboard" />
       </div>
     </div>
   );

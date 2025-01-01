@@ -1,13 +1,21 @@
 import React, { useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { chatSession } from "../../utils/GeminiAIModal";
+import { v4 as uuidv4 } from "uuid"; 
+import moment from "moment"; 
+import { useUser } from "@clerk/clerk-react"; 
+import { useNavigate } from "react-router-dom"; // Import useNavigate for redirection
 
 const AddNewInterview = ({ onClose }) => {
   const [jobRole, setJobRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [yearsOfExperience, setYearsOfExperience] = useState("");
-  const [error, setError] = useState(null); // New state for error handling
-  const [isLoading, setIsLoading] = useState(false); // New state for loading
+  const [error, setError] = useState(null); 
+  const [isLoading, setIsLoading] = useState(false); 
+  const [jsonResponse, setJsonResponse] = useState([]);
+
+  const { user } = useUser(); 
+  const navigate = useNavigate(); // Initialize navigate
 
   const handleYearsOfExperienceChange = (e) => {
     const value = e.target.value;
@@ -20,26 +28,61 @@ const AddNewInterview = ({ onClose }) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
-
-    // Log form data to the console
+  
     const formData = {
       jobRole,
       jobDescription,
       yearsOfExperience,
     };
-    console.log("Form Data:", formData);
-
-    const InputPrompt = `Job Position: ${jobRole}, Job Description: ${jobDescription}, Years of Experience: ${yearsOfExperience}. Depend on Job Position, Job Description and Year of Experience, Give us 5 interview questions along with answer in JSON format. Give us question and answer as field in JSON`;
-
+  
+    const InputPrompt = `Job Position: ${jobRole}, Job Description: ${jobDescription}, Years of Experience: ${yearsOfExperience}. Depend on Job Position, Job Description and Year of Experience. Generate 5 concise interview questions and answers related to the given job position, job description, and years of experience. The answers should be no longer than 2-3 sentences, focusing on key points only. Format the output in JSON, with fields for question and answer.`;
+  
     try {
       const result = await chatSession.sendMessage(InputPrompt);
-      console.log(await result.response.text());
+      const mockJsonResp = result.response.text()
+        .replace('```json', '')
+        .replace('```', '');
+      const parsedQuestions = JSON.parse(mockJsonResp);
+  
+      setJsonResponse(parsedQuestions);
+  
+      const response = await fetch("http://localhost:5000/interview/saveInterview", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mockId: uuidv4(), // Generate a unique ID
+          jsonMockResp: parsedQuestions,
+          jobPosition: jobRole,
+          jobDesc: jobDescription,
+          jobExperience: yearsOfExperience,
+          createdBy: user?.primaryEmailAddress?.emailAddress, // Use Clerk to get the user email
+          createdAt: moment().format("DD-MM-yyyy"), // Format the current date
+        }),
+      });
+  
+      const data = await response.json();
+      console.log("Backend response:", data);
+  
+      if (!response.ok) {
+        throw new Error(data.message || "Something went wrong!");
+      }
+  
+      // Redirect user to the interview page with mockId
+      if (data.mockId) {
+        navigate(`/interview/${data.mockId}`); // Use the returned mockId for redirection
+      } else {
+        throw new Error("mockId not returned from backend");
+      }
     } catch (error) {
-      setError("Error fetching interview questions.");
+      console.error("Error:", error);
+      setError(error.message || "Failed to save interview data!");
     }
-
+  
     setIsLoading(false);
   };
+  
 
   return (
     <div className="relative bg-white rounded-xl shadow-md overflow-hidden w-[90%] md:w-[70%] lg:w-[50%] xl:w-[40%] mx-auto p-6">
