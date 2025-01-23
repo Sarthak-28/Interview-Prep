@@ -5,6 +5,7 @@ import QuestionNavigation from "./../components/QuestionPageComponents/QuestionN
 import QuestionDisplay from "./../components/QuestionPageComponents/QuestionDisplay";
 import AnswerInput from "./../components/QuestionPageComponents/AnswerInput";
 import WebcamSection from "./../components/QuestionPageComponents/WebcamSection";
+import { chatSession } from "../../utils/GeminiAIModal"; // Adjust the path as needed
 
 const QuestionPage = () => {
   const { mockId } = useParams();
@@ -18,6 +19,7 @@ const QuestionPage = () => {
   const [showDialog, setShowDialog] = useState(false);
   const navigate = useNavigate();
 
+  // Fetch questions and initialize answers
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -41,12 +43,47 @@ const QuestionPage = () => {
     fetchQuestions();
   }, [mockId]);
 
+  // Save the current answer locally
   const saveCurrentAnswer = () => {
     const updatedAnswers = [...answers];
-    updatedAnswers[currentQuestionIndex] = typedAnswer; // Save typed answer
+    updatedAnswers[currentQuestionIndex] = typedAnswer;
     setAnswers(updatedAnswers);
   };
 
+  // Save answers to the backend
+  const saveAnswersToBackend = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/interview/${mockId}/answers`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            answers: questions.map((question, index) => ({
+              question: question.question,
+              answer: answers[index] || "No answer provided",
+            })),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to save answers");
+      }
+
+      const data = await response.json();
+      console.log("Answers saved successfully:", data);
+      return true;
+    } catch (err) {
+      console.error("Error saving answers:", err);
+      setError(err.message);
+      return false;
+    }
+  };
+
+  // Handle navigation to the next question
   const handleNext = () => {
     saveCurrentAnswer();
     if (currentQuestionIndex < questions.length - 1) {
@@ -57,6 +94,7 @@ const QuestionPage = () => {
     }
   };
 
+  // Handle navigation to the previous question
   const handlePrevious = () => {
     saveCurrentAnswer();
     if (currentQuestionIndex > 0) {
@@ -65,33 +103,96 @@ const QuestionPage = () => {
     }
   };
 
+  // Handle clicking the "Done" button
   const handleDoneClick = () => {
     saveCurrentAnswer();
     setIsAnswerInputVisible(false);
   };
 
+  // Handle clicking the "Edit" button
   const handleEditClick = () => {
     setIsAnswerInputVisible(true);
   };
 
-  const handleFinishClick = () => {
+  // Handle clicking the "Finish" button
+  const handleFinishClick = async () => {
     const unansweredQuestions = answers.filter(
       (answer) => answer === ""
     ).length;
+
     if (unansweredQuestions > 0) {
       setShowDialog(true);
     } else {
+      // Save answers to the backend
+      const success = await saveAnswersToBackend();
+      if (success) {
+        // Generate feedback for each question
+        for (let i = 0; i < questions.length; i++) {
+          const question = questions[i].question;
+          const userAnswer = answers[i] || "No answer provided";
+          const feedback = await generateFeedback(question, userAnswer);
+          if (feedback) {
+            console.log(`Feedback for Question ${i + 1}:`, feedback);
+          }
+        }
+        navigate("/thank-you");
+      }
+    }
+  };
+
+  // Handle confirming the dialog (submit with unanswered questions)
+  const handleDialogConfirm = async () => {
+    // Save answers to the backend
+    const success = await saveAnswersToBackend();
+    if (success) {
+      // Generate feedback for each question
+      for (let i = 0; i < questions.length; i++) {
+        const question = questions[i].question;
+        const userAnswer = answers[i] || "No answer provided";
+        const feedback = await generateFeedback(question, userAnswer);
+        if (feedback) {
+          console.log(`Feedback for Question ${i + 1}:`, feedback);
+        }
+      }
+      setShowDialog(false);
       navigate("/thank-you");
     }
   };
 
-  const handleDialogConfirm = () => {
-    setShowDialog(false);
-    navigate("/thank-you");
-  };
-
+  // Handle canceling the dialog
   const handleDialogCancel = () => {
     setShowDialog(false);
+  };
+
+  const generateFeedback = async (question, userAnswer) => {
+    try {
+      const feedbackPrompt = `
+        Question: ${question}
+        User Answer: ${userAnswer}
+        Depends on question and user answer for given interview question, please give us:
+        1. A rating for the answer (out of 10)
+        2. Feedback as area of improvement (if any) in just 3-5 lines
+        Return the response in JSON format with "rating" and "feedback" fields.
+      `;
+
+      // Call your AI API (e.g., Gemini AI)
+      const result = await chatSession.sendMessage(feedbackPrompt);
+
+      // Clean up the response
+      const mockJsonResp = result.response
+        .text()
+        .replace("```json", "")
+        .replace("```", "");
+
+      // Parse the JSON response
+      const JsonFeedbackResp = JSON.parse(mockJsonResp);
+      console.log("Feedback Response:", JsonFeedbackResp);
+
+      return JsonFeedbackResp;
+    } catch (error) {
+      console.error("Error generating feedback:", error);
+      return null;
+    }
   };
 
   if (loading) {
@@ -179,3 +280,14 @@ const QuestionPage = () => {
 };
 
 export default QuestionPage;
+
+/*
+"question":"What is Node.js and why is it popular for backend development?
+"answer":"Node.js is a JavaScript runtime environment that allows you to execute JavaScript code server-side. Its popularity stems from its non-blocking, event-driven architecture making it highly efficient for I/O operations, and the use of a single language across front-end and back-end."},
+{"question":"Explain the concept of asynchronous programming in Node.js.","answer":"Asynchronous programming in Node.js allows the program to continue executing other tasks while waiting for a long-running operation (like a database query) to complete. This avoids blocking the main thread, maintaining high performance and responsiveness."},
+{"question":"What is npm and how do you use it in a Node.js project?",
+"answer":"npm (Node Package Manager) is a package manager for JavaScript, used to install, manage, and share code packages (libraries/modules). You use it by running commands like 'npm install [package_name]' in your project's directory to add dependencies."},{"question":"What is a callback function in JavaScript and how is it used in Node.js?","answer":"A callback function is a function passed as an argument to another function, and is executed when the first function's task is completed. In Node.js, callbacks are commonly used to handle results of asynchronous operations, ensuring code runs in the correct order."},
+{"question":"Can you describe a basic HTTP request lifecycle in Node.js?"
+,"answer":"A basic HTTP request in Node.js involves receiving a request, parsing it, performing processing based on the request (like fetching data), and then sending a response back to the client. This can involve modules like http or express."}],"jobPosition":"Backend ","jobDesc":"Nodejs","jobExperience":{"$numberInt":"0"},"createdBy":"sarthak.patel.3810210@ves.ac.in","createdAt":"26-12-2024","__v":{"$numberInt":"0"},"answers":[{"question":"What is Node.js and why is it popular for backend development?","answer":"Gojo"},{"question":"Explain the concept of asynchronous programming in Node.js.","answer":"Dojo"},{"question":"What is npm and how do you use it in a Node.js project?","answer":"No answer provided"},{"question":"What is a callback function in JavaScript and how is it used in Node.js?","answer":"No answer provided"},{"question":"Can you describe a basic HTTP request lifecycle in Node.js?","answer":"No answer provided"}]}
+
+*/

@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { StrictMode, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import './index.css';
@@ -6,11 +6,14 @@ import App from './App.jsx';
 import SignInPage from './auth/sign-in/SignInPage.jsx';
 import SignUpPage from './auth/sign-up/SignUpPage.jsx';
 import { ClerkProvider } from '@clerk/clerk-react';
-import Dashboard from './pages/Dashboard.jsx'; // Use the new Dashboard component
 import LandingPage from './pages/LandingPage.jsx';
-import Resume from './pages/Resume.jsx';
-import InterviewPage from './pages/InterviewPage.jsx';
-import QuestionsPage from './pages/QuestionPage.jsx';
+import Loader from './components/Loader'; // Import the Loader component
+
+// Lazy-loaded components
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
+const Resume = lazy(() => import('./pages/Resume.jsx'));
+const InterviewPage = lazy(() => import('./pages/InterviewPage.jsx'));
+const QuestionsPage = lazy(() => import('./pages/QuestionPage.jsx'));
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -20,26 +23,42 @@ const router = createBrowserRouter([
     element: <LandingPage />,
   },
   {
-    path: '/dashboard', 
+    path: '/dashboard',
     element: <App />,
     children: [
       {
         index: true,
-        element: <Dashboard />, 
+        element: (
+          <Suspense fallback={<Loader />}>
+            <Dashboard />
+          </Suspense>
+        ),
       },
     ],
   },
   {
-    path: 'resume', 
-    element: <Resume />, 
+    path: 'resume',
+    element: (
+      <Suspense fallback={<Loader />}>
+        <Resume />
+      </Suspense>
+    ),
   },
   {
-    path: '/interview/:mockId', 
-    element: <InterviewPage />,
+    path: '/interview/:mockId',
+    element: (
+      <Suspense fallback={<Loader />}>
+        <InterviewPage />
+      </Suspense>
+    ),
   },
   {
-    path: '/interview/:mockId/questions', 
-    element: <QuestionsPage />,
+    path: '/interview/:mockId/questions',
+    element: (
+      <Suspense fallback={<Loader />}>
+        <QuestionsPage />
+      </Suspense>
+    ),
   },
   {
     path: 'auth/sign-in',
@@ -51,7 +70,11 @@ const router = createBrowserRouter([
   },
 ]);
 
-createRoot(document.getElementById('root')).render(
+// Create the root once
+const root = createRoot(document.getElementById('root'));
+
+// Render the app
+root.render(
   <StrictMode>
     <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
       <RouterProvider router={router} />
