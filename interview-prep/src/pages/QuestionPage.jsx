@@ -5,18 +5,24 @@ import QuestionNavigation from "./../components/QuestionPageComponents/QuestionN
 import QuestionDisplay from "./../components/QuestionPageComponents/QuestionDisplay";
 import AnswerInput from "./../components/QuestionPageComponents/AnswerInput";
 import WebcamSection from "./../components/QuestionPageComponents/WebcamSection";
-import { chatSession } from "../../utils/GeminiAIModal"; // Adjust the path as needed
+import { chatSession } from "../../utils/GeminiAIModal"; 
+import Loader from "./../components/Loader";
+import moment from "moment"; 
+import { useUser } from "@clerk/clerk-react"; 
 
+ 
 const QuestionPage = () => {
+  const { user } = useUser();
   const { mockId } = useParams();
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAnswerInputVisible, setIsAnswerInputVisible] = useState(false);
   const [typedAnswer, setTypedAnswer] = useState("");
+  const [isAnswerInputVisible, setIsAnswerInputVisible] = useState(false);
   const [answers, setAnswers] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // New state for loader
   const navigate = useNavigate();
 
   // Fetch questions and initialize answers
@@ -114,48 +120,66 @@ const QuestionPage = () => {
     setIsAnswerInputVisible(true);
   };
 
+  const handleTypeAnswerClick = () => {
+    setIsAnswerInputVisible(true);
+  };
+
   // Handle clicking the "Finish" button
   const handleFinishClick = async () => {
-    const unansweredQuestions = answers.filter(
-      (answer) => answer === ""
-    ).length;
-
+    const unansweredQuestions = answers.filter((answer) => answer === "").length;
+  
     if (unansweredQuestions > 0) {
       setShowDialog(true);
     } else {
-      // Save answers to the backend
-      const success = await saveAnswersToBackend();
-      if (success) {
-        // Generate feedback for each question
-        for (let i = 0; i < questions.length; i++) {
-          const question = questions[i].question;
-          const userAnswer = answers[i] || "No answer provided";
-          const feedback = await generateFeedback(question, userAnswer);
-          if (feedback) {
-            console.log(`Feedback for Question ${i + 1}:`, feedback);
+      setIsSubmitting(true); // Show loader
+      try {
+        // Save answers to the backend
+        const success = await saveAnswersToBackend();
+        if (success) {
+          // Generate feedback for all questions
+          const feedbackList = await generateFeedback(questions, answers);
+          if (feedbackList) {
+            console.log("Feedback for all questions:", feedbackList);
+  
+            // Save all feedback and answers to the backend
+            await saveUserAnswerToBackend(mockId, feedbackList, user);
+  
+            
+            navigate("/feedbackpage", { state: { mockId } });
           }
         }
-        navigate("/thank-you");
+      } catch (error) {
+        console.error("Error during submission:", error);
+        setError("An error occurred during submission.");
+      } finally {
+        setIsSubmitting(false); // Hide loader
       }
     }
   };
 
   // Handle confirming the dialog (submit with unanswered questions)
   const handleDialogConfirm = async () => {
-    // Save answers to the backend
-    const success = await saveAnswersToBackend();
-    if (success) {
-      // Generate feedback for each question
-      for (let i = 0; i < questions.length; i++) {
-        const question = questions[i].question;
-        const userAnswer = answers[i] || "No answer provided";
-        const feedback = await generateFeedback(question, userAnswer);
-        if (feedback) {
-          console.log(`Feedback for Question ${i + 1}:`, feedback);
+    setIsSubmitting(true); // Show loader
+    try {
+      // Save answers to the backend
+      const success = await saveAnswersToBackend();
+      if (success) {
+        // Generate feedback for all questions
+        const feedbackList = await generateFeedback(questions, answers);
+        if (feedbackList) {
+          console.log("Feedback for all questions:", feedbackList);
+  
+          // Save all feedback and answers to the backend
+          await saveUserAnswerToBackend(mockId, feedbackList, user);
         }
+        setShowDialog(false);
+        navigate("/feedbackpage", { state: { mockId } });
       }
-      setShowDialog(false);
-      navigate("/thank-you");
+    } catch (error) {
+      console.error("Error during submission:", error);
+      setError("An error occurred during submission.");
+    } finally {
+      setIsSubmitting(false); // Hide loader
     }
   };
 
@@ -164,31 +188,76 @@ const QuestionPage = () => {
     setShowDialog(false);
   };
 
-  const generateFeedback = async (question, userAnswer) => {
+  const saveUserAnswerToBackend = async (mockIdRef, feedbackList, user) => {
     try {
-      const feedbackPrompt = `
-        Question: ${question}
-        User Answer: ${userAnswer}
-        Depends on question and user answer for given interview question, please give us:
-        1. A rating for the answer (out of 10)
-        2. Feedback as area of improvement (if any) in just 3-5 lines
-        Return the response in JSON format with "rating" and "feedback" fields.
-      `;
+      // Save all user answers with feedback and ratings to the backend
+      const response = await fetch("http://localhost:5000/interview/saveUserAnswer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mockIdRef, // From the function parameter
+          userEmail: user?.primaryEmailAddress?.emailAddress, // Use Clerk to get the user email
+          createdAt: moment().format("DD-MM-yyyy"), // Format the current date
+          answers: feedbackList, // Array of all answers and feedback
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to save user answers");
+      }
+  
+      const data = await response.json();
+      console.log("User answers saved successfully:", data);
+      return true;
+    } catch (error) {
+      console.error("Error saving user answers:", error);
+      return false;
+    }
+  };
 
-      // Call your AI API (e.g., Gemini AI)
-      const result = await chatSession.sendMessage(feedbackPrompt);
-
-      // Clean up the response
-      const mockJsonResp = result.response
-        .text()
-        .replace("```json", "")
-        .replace("```", "");
-
-      // Parse the JSON response
-      const JsonFeedbackResp = JSON.parse(mockJsonResp);
-      console.log("Feedback Response:", JsonFeedbackResp);
-
-      return JsonFeedbackResp;
+  const generateFeedback = async (questions, answers) => {
+    try {
+      const feedbackList = [];
+  
+      // Generate feedback for each question
+      for (let i = 0; i < questions.length; i++) {
+        const question = questions[i].question;
+        const userAnswer = answers[i] || "No answer provided";
+  
+        const feedbackPrompt = `
+          Question: ${question}
+          User Answer: ${userAnswer}
+          Depends on question and user answer for given interview question, please give us:
+          1. A rating for the answer (out of 10)
+          2. Feedback as area of improvement (if any) in just 3-5 lines
+          Return the response in JSON format with "rating" and "feedback" fields.
+        `;
+  
+        // Call your AI API (e.g., Gemini AI)
+        const result = await chatSession.sendMessage(feedbackPrompt);
+  
+        // Clean up the response
+        const mockJsonResp = result.response
+          .text()
+          .replace("```json", "")
+          .replace("```", "");
+  
+        // Parse the JSON response
+        const JsonFeedbackResp = JSON.parse(mockJsonResp);
+        console.log("Feedback Response:", JsonFeedbackResp);
+  
+        feedbackList.push({
+          question,
+          correctAns: questions[i].answer, // Correct answer from the interview data
+          userAns: userAnswer,
+          feedback: JsonFeedbackResp.feedback,
+          rating: JsonFeedbackResp.rating.toString(),
+        });
+      }
+  
+      return feedbackList;
     } catch (error) {
       console.error("Error generating feedback:", error);
       return null;
@@ -206,7 +275,13 @@ const QuestionPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center">
       <Header />
-      <div className="flex flex-col md:flex-row items-center justify-center mt-10 mx-4 md:mx-auto bg-white shadow-md rounded-lg p-6 max-w-7xl w-full">
+      {/* Show loader while submitting */}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
+          <Loader />
+        </div>
+      )}
+      <div className="flex flex-col md:flex-row items-center justify-center mt-10 mx-4 md:mx-auto bg-white shadow-md rounded-lg p-6 max-w-7xl w-full relative">
         <div className="md:w-2/3 w-full">
           <QuestionNavigation
             questions={questions}
@@ -217,10 +292,16 @@ const QuestionPage = () => {
               setTypedAnswer(answers[index] || "");
             }}
           />
-          <QuestionDisplay
-            question={questions[currentQuestionIndex]?.question}
-            handleTypeAnswerClick={() => setIsAnswerInputVisible(true)}
-          />
+          <div>
+            <QuestionDisplay
+              question={questions[currentQuestionIndex]?.question} // Pass the fetched question here
+              handleTypeAnswerClick={() => setIsAnswerInputVisible(true)}
+              setTypedAnswer={setTypedAnswer}
+              setIsAnswerInputVisible={setIsAnswerInputVisible}
+              isSubmitted={false}
+              setCurrentQuestionIndex={setCurrentQuestionIndex}
+            />
+          </div>
           <AnswerInput
             isAnswerInputVisible={isAnswerInputVisible}
             typedAnswer={typedAnswer}

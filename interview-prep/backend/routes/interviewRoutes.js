@@ -4,7 +4,9 @@ const {
   saveInterview,
   getInterview,
   getInterviewQuestions,
-  saveAnswers 
+  saveAnswers,
+  saveUserAnswer,
+  getFeedback // Add this new controller function
 } = require("../controllers/interviewController");
 
 // Route to save interview data
@@ -17,6 +19,12 @@ router.get("/:mockId", getInterview);
 router.get("/:mockId/questions", getInterviewQuestions);
 
 // Route to save answers
-router.put("/:mockId/answers", saveAnswers); 
+router.put("/:mockId/answers", saveAnswers);
+
+// Route to save user answers
+router.post("/saveUserAnswer", saveUserAnswer);
+
+// Route to get feedback data
+router.get("/feedback/:mockId", getFeedback); // Add this new route
 
 module.exports = router;

@@ -1,4 +1,5 @@
 const Interview = require("../models/Interview");
+const UserAnswer = require("../models/UserAnswer");
 
 exports.saveInterview = async (req, res) => {
   try {
@@ -94,6 +95,55 @@ exports.saveAnswers = async (req, res) => {
     });
   } catch (error) {
     console.error("Error saving answers:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+exports.saveUserAnswer = async (req, res) => {
+  try {
+    const { mockIdRef, userEmail, createdAt, answers } = req.body;
+
+    const newUserAnswer = new UserAnswer({
+      mockIdRef,
+      userEmail,
+      createdAt,
+      answers, // This will be an array of objects containing question, correctAns, userAns, feedback, and rating
+    });
+
+    await newUserAnswer.save();
+    res.status(201).json({ message: "User answers saved successfully" });
+  } catch (error) {
+    console.error("Error saving user answers:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+exports.getFeedback = async (req, res) => {
+  try {
+    const { mockId } = req.params;
+
+    // Fetch the user answers based on mockId
+    const userAnswers = await UserAnswer.find({ mockIdRef: mockId });
+
+    if (!userAnswers || userAnswers.length === 0) {
+      return res.status(404).json({ message: "Feedback not found!" });
+    }
+
+    // Format the feedback data
+    const feedbackData = {
+      overallRating: "4.5", // You can calculate this based on your logic
+      questions: userAnswers[0].answers.map(answer => ({
+        question: answer.question,
+        userAnswer: answer.userAns,
+        correctAnswer: answer.correctAns,
+        feedback: answer.feedback,
+        rating: answer.rating,
+      })),
+    };
+
+    res.json(feedbackData);
+  } catch (error) {
+    console.error("Error fetching feedback data:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

@@ -14,6 +14,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const Resume = lazy(() => import('./pages/Resume.jsx'));
 const InterviewPage = lazy(() => import('./pages/InterviewPage.jsx'));
 const QuestionsPage = lazy(() => import('./pages/QuestionPage.jsx'));
+const FeedbackPage = lazy(() => import('./pages/FeedbackPage.jsx')); // Add FeedbackPage
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -57,6 +58,14 @@ const router = createBrowserRouter([
     element: (
       <Suspense fallback={<Loader />}>
         <QuestionsPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/feedbackpage', // Add the new route
+    element: (
+      <Suspense fallback={<Loader />}>
+        <FeedbackPage />
       </Suspense>
     ),
   },
