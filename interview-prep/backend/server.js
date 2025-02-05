@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const interviewRoutes = require("./routes/interviewRoutes");
+const resumeRoutes = require("./routes/resumeRoutes"); // Import the new resume routes
 
 const app = express();
 const PORT = 5000;
@@ -25,6 +26,9 @@ mongoose
 
 // Use the interview routes
 app.use("/interview", interviewRoutes);
+
+// Use the resume routes
+app.use("/resume", resumeRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
