@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Header from "../components/Header";
+
 
 const FeedbackPage = () => {
   const [feedbackData, setFeedbackData] = useState({
@@ -17,7 +19,7 @@ const FeedbackPage = () => {
   useEffect(() => {
     const fetchFeedbackData = async () => {
       try {
-        const mockId = location.state?.mockId;
+        const mockId = location.state?.mockId; // Get mockId from location.state
         if (!mockId) {
           throw new Error("Mock ID is required");
         }
@@ -64,6 +66,8 @@ const FeedbackPage = () => {
   }
 
   return (
+    <>
+    <Header/>
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
       <div className="bg-white shadow-md rounded-lg p-6 max-w-4xl w-full">
         <h1 className="text-3xl font-bold text-center mb-4">Congratulations!</h1>
@@ -117,6 +121,7 @@ const FeedbackPage = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

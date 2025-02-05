@@ -5,12 +5,11 @@ import QuestionNavigation from "./../components/QuestionPageComponents/QuestionN
 import QuestionDisplay from "./../components/QuestionPageComponents/QuestionDisplay";
 import AnswerInput from "./../components/QuestionPageComponents/AnswerInput";
 import WebcamSection from "./../components/QuestionPageComponents/WebcamSection";
-import { chatSession } from "../../utils/GeminiAIModal"; 
+import { chatSession } from "../../utils/GeminiAIModal";
 import Loader from "./../components/Loader";
-import moment from "moment"; 
-import { useUser } from "@clerk/clerk-react"; 
+import moment from "moment";
+import { useUser } from "@clerk/clerk-react";
 
- 
 const QuestionPage = () => {
   const { user } = useUser();
   const { mockId } = useParams();
@@ -22,16 +21,14 @@ const QuestionPage = () => {
   const [isAnswerInputVisible, setIsAnswerInputVisible] = useState(false);
   const [answers, setAnswers] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // New state for loader
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingFeedback, setIsGeneratingFeedback] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch questions and initialize answers
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await fetch(
-          `http://localhost:5000/interview/${mockId}`
-        );
+        const response = await fetch(`http://localhost:5000/interview/${mockId}`);
         if (!response.ok) {
           throw new Error("Failed to fetch questions");
         }
@@ -45,18 +42,16 @@ const QuestionPage = () => {
         setLoading(false);
       }
     };
-
     fetchQuestions();
   }, [mockId]);
 
-  // Save the current answer locally
+
   const saveCurrentAnswer = () => {
     const updatedAnswers = [...answers];
     updatedAnswers[currentQuestionIndex] = typedAnswer;
     setAnswers(updatedAnswers);
   };
 
-  // Save answers to the backend
   const saveAnswersToBackend = async () => {
     try {
       const response = await fetch(
@@ -74,11 +69,9 @@ const QuestionPage = () => {
           }),
         }
       );
-
       if (!response.ok) {
         throw new Error("Failed to save answers");
       }
-
       const data = await response.json();
       console.log("Answers saved successfully:", data);
       return true;
@@ -89,7 +82,6 @@ const QuestionPage = () => {
     }
   };
 
-  // Handle navigation to the next question
   const handleNext = () => {
     saveCurrentAnswer();
     if (currentQuestionIndex < questions.length - 1) {
@@ -100,7 +92,6 @@ const QuestionPage = () => {
     }
   };
 
-  // Handle navigation to the previous question
   const handlePrevious = () => {
     saveCurrentAnswer();
     if (currentQuestionIndex > 0) {
@@ -109,13 +100,11 @@ const QuestionPage = () => {
     }
   };
 
-  // Handle clicking the "Done" button
   const handleDoneClick = () => {
     saveCurrentAnswer();
     setIsAnswerInputVisible(false);
   };
 
-  // Handle clicking the "Edit" button
   const handleEditClick = () => {
     setIsAnswerInputVisible(true);
   };
@@ -124,52 +113,37 @@ const QuestionPage = () => {
     setIsAnswerInputVisible(true);
   };
 
-  // Handle clicking the "Finish" button
   const handleFinishClick = async () => {
-    const unansweredQuestions = answers.filter((answer) => answer === "").length;
-  
-    if (unansweredQuestions > 0) {
-      setShowDialog(true);
-    } else {
-      setIsSubmitting(true); // Show loader
-      try {
-        // Save answers to the backend
-        const success = await saveAnswersToBackend();
-        if (success) {
-          // Generate feedback for all questions
-          const feedbackList = await generateFeedback(questions, answers);
-          if (feedbackList) {
-            console.log("Feedback for all questions:", feedbackList);
-  
-            // Save all feedback and answers to the backend
-            await saveUserAnswerToBackend(mockId, feedbackList, user);
-  
-            
+    // (Your existing logic to check unanswered questions, save answers, etc.)
+    setIsSubmitting(true);
+    try {
+      const success = await saveAnswersToBackend();
+      if (success) {
+        const feedbackList = await generateFeedback(questions, answers);
+        if (feedbackList) {
+          const userAnswerSaved = await saveUserAnswerToBackend(mockId, feedbackList, user);
+          if (userAnswerSaved) {
+            setIsInterviewSubmitted(true); // Mark as submitted
             navigate("/feedbackpage", { state: { mockId } });
           }
         }
-      } catch (error) {
-        console.error("Error during submission:", error);
-        setError("An error occurred during submission.");
-      } finally {
-        setIsSubmitting(false); // Hide loader
       }
+    } catch (error) {
+      console.error("Error during submission:", error);
+      setError("An error occurred during submission.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+  
 
-  // Handle confirming the dialog (submit with unanswered questions)
   const handleDialogConfirm = async () => {
-    setIsSubmitting(true); // Show loader
+    setIsSubmitting(true);
     try {
-      // Save answers to the backend
       const success = await saveAnswersToBackend();
       if (success) {
-        // Generate feedback for all questions
         const feedbackList = await generateFeedback(questions, answers);
         if (feedbackList) {
-          console.log("Feedback for all questions:", feedbackList);
-  
-          // Save all feedback and answers to the backend
           await saveUserAnswerToBackend(mockId, feedbackList, user);
         }
         setShowDialog(false);
@@ -179,35 +153,33 @@ const QuestionPage = () => {
       console.error("Error during submission:", error);
       setError("An error occurred during submission.");
     } finally {
-      setIsSubmitting(false); // Hide loader
+      setIsSubmitting(false);
     }
   };
 
-  // Handle canceling the dialog
   const handleDialogCancel = () => {
     setShowDialog(false);
   };
 
   const saveUserAnswerToBackend = async (mockIdRef, feedbackList, user) => {
     try {
-      // Save all user answers with feedback and ratings to the backend
       const response = await fetch("http://localhost:5000/interview/saveUserAnswer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          mockIdRef, // From the function parameter
-          userEmail: user?.primaryEmailAddress?.emailAddress, // Use Clerk to get the user email
-          createdAt: moment().format("DD-MM-yyyy"), // Format the current date
-          answers: feedbackList, // Array of all answers and feedback
+          mockIdRef,
+          userEmail: user?.primaryEmailAddress?.emailAddress,
+          createdAt: moment().format("DD-MM-yyyy"),
+          answers: feedbackList,
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error("Failed to save user answers");
       }
-  
+
       const data = await response.json();
       console.log("User answers saved successfully:", data);
       return true;
@@ -218,14 +190,14 @@ const QuestionPage = () => {
   };
 
   const generateFeedback = async (questions, answers) => {
+    setIsGeneratingFeedback(true);
     try {
       const feedbackList = [];
-  
-      // Generate feedback for each question
+
       for (let i = 0; i < questions.length; i++) {
         const question = questions[i].question;
         const userAnswer = answers[i] || "No answer provided";
-  
+
         const feedbackPrompt = `
           Question: ${question}
           User Answer: ${userAnswer}
@@ -234,49 +206,64 @@ const QuestionPage = () => {
           2. Feedback as area of improvement (if any) in just 3-5 lines
           Return the response in JSON format with "rating" and "feedback" fields.
         `;
-  
-        // Call your AI API (e.g., Gemini AI)
+
         const result = await chatSession.sendMessage(feedbackPrompt);
-  
-        // Clean up the response
+
         const mockJsonResp = result.response
           .text()
           .replace("```json", "")
           .replace("```", "");
-  
-        // Parse the JSON response
-        const JsonFeedbackResp = JSON.parse(mockJsonResp);
-        console.log("Feedback Response:", JsonFeedbackResp);
-  
-        feedbackList.push({
-          question,
-          correctAns: questions[i].answer, // Correct answer from the interview data
-          userAns: userAnswer,
-          feedback: JsonFeedbackResp.feedback,
-          rating: JsonFeedbackResp.rating.toString(),
-        });
+
+        try {
+          const jsonFeedbackResp = JSON.parse(mockJsonResp);
+          feedbackList.push({
+            question,
+            correctAns: questions[i].answer,
+            userAns: userAnswer,
+            feedback: jsonFeedbackResp.feedback,
+            rating: jsonFeedbackResp.rating.toString(),
+          });
+        } catch (parseError) {
+          console.error("Error parsing feedback response:", parseError);
+          feedbackList.push({
+            question,
+            correctAns: questions[i].answer,
+            userAns: userAnswer,
+            feedback: "Unable to generate feedback.",
+            rating: "N/A",
+          });
+        }
       }
-  
+
       return feedbackList;
     } catch (error) {
       console.error("Error generating feedback:", error);
       return null;
+    } finally {
+      setIsGeneratingFeedback(false);
     }
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader />
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
+    return (
+      <div className="text-red-500 text-center mt-10">
+        {error}
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center">
       <Header />
-      {/* Show loader while submitting */}
-      {isSubmitting && (
+      {(isSubmitting || isGeneratingFeedback) && (
         <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center z-50">
           <Loader />
         </div>
@@ -294,8 +281,8 @@ const QuestionPage = () => {
           />
           <div>
             <QuestionDisplay
-              question={questions[currentQuestionIndex]?.question} // Pass the fetched question here
-              handleTypeAnswerClick={() => setIsAnswerInputVisible(true)}
+              question={questions[currentQuestionIndex]?.question}
+              handleTypeAnswerClick={handleTypeAnswerClick}
               setTypedAnswer={setTypedAnswer}
               setIsAnswerInputVisible={setIsAnswerInputVisible}
               isSubmitted={false}
@@ -323,9 +310,7 @@ const QuestionPage = () => {
               className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg"
               onClick={handleNext}
             >
-              {currentQuestionIndex === questions.length - 1
-                ? "Finish"
-                : "Next"}
+              {currentQuestionIndex === questions.length - 1 ? "Finish" : "Next"}
             </button>
           </div>
         </div>
@@ -336,8 +321,7 @@ const QuestionPage = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
             <h3 className="text-xl font-semibold mb-4">Unanswered Questions</h3>
             <p className="mb-4">
-              You have some unanswered questions. Are you sure you want to
-              submit?
+              You have some unanswered questions. Are you sure you want to submit?
             </p>
             <div className="flex justify-between">
               <button
@@ -361,14 +345,3 @@ const QuestionPage = () => {
 };
 
 export default QuestionPage;
-
-/*
-"question":"What is Node.js and why is it popular for backend development?
-"answer":"Node.js is a JavaScript runtime environment that allows you to execute JavaScript code server-side. Its popularity stems from its non-blocking, event-driven architecture making it highly efficient for I/O operations, and the use of a single language across front-end and back-end."},
-{"question":"Explain the concept of asynchronous programming in Node.js.","answer":"Asynchronous programming in Node.js allows the program to continue executing other tasks while waiting for a long-running operation (like a database query) to complete. This avoids blocking the main thread, maintaining high performance and responsiveness."},
-{"question":"What is npm and how do you use it in a Node.js project?",
-"answer":"npm (Node Package Manager) is a package manager for JavaScript, used to install, manage, and share code packages (libraries/modules). You use it by running commands like 'npm install [package_name]' in your project's directory to add dependencies."},{"question":"What is a callback function in JavaScript and how is it used in Node.js?","answer":"A callback function is a function passed as an argument to another function, and is executed when the first function's task is completed. In Node.js, callbacks are commonly used to handle results of asynchronous operations, ensuring code runs in the correct order."},
-{"question":"Can you describe a basic HTTP request lifecycle in Node.js?"
-,"answer":"A basic HTTP request in Node.js involves receiving a request, parsing it, performing processing based on the request (like fetching data), and then sending a response back to the client. This can involve modules like http or express."}],"jobPosition":"Backend ","jobDesc":"Nodejs","jobExperience":{"$numberInt":"0"},"createdBy":"sarthak.patel.3810210@ves.ac.in","createdAt":"26-12-2024","__v":{"$numberInt":"0"},"answers":[{"question":"What is Node.js and why is it popular for backend development?","answer":"Gojo"},{"question":"Explain the concept of asynchronous programming in Node.js.","answer":"Dojo"},{"question":"What is npm and how do you use it in a Node.js project?","answer":"No answer provided"},{"question":"What is a callback function in JavaScript and how is it used in Node.js?","answer":"No answer provided"},{"question":"Can you describe a basic HTTP request lifecycle in Node.js?","answer":"No answer provided"}]}
-
-*/

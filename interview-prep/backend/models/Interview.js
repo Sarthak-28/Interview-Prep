@@ -8,7 +8,7 @@ const interviewSchema = new mongoose.Schema({
   jobExperience: { type: Number, required: true },
   createdBy: { type: String, required: true },
   createdAt: { type: String, required: true },
-  answers: { type: Array, default: [] } // Add this new field
+  answers: { type: Array, default: [] } 
 });
 
 module.exports = mongoose.model("Interview", interviewSchema);
