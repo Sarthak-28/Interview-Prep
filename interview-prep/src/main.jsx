@@ -8,6 +8,7 @@ import SignUpPage from './auth/sign-up/SignUpPage.jsx';
 import { ClerkProvider } from '@clerk/clerk-react';
 import LandingPage from './pages/LandingPage.jsx';
 import Loader from './components/Loader'; // Import the Loader component
+import ResumeBuilder from './pages/ResumeBuilder.jsx';
 
 // Lazy-loaded components
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
@@ -42,6 +43,14 @@ const router = createBrowserRouter([
     element: (
       <Suspense fallback={<Loader />}>
         <Resume />
+      </Suspense>
+    ),
+  },
+  {
+    path: 'resume-builder',
+    element: (
+      <Suspense fallback={<Loader />}>
+        <ResumeBuilder/>
       </Suspense>
     ),
   },
