@@ -37,3 +37,25 @@ exports.getResume = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+exports.updateResume = async (req, res) => {
+    try {
+        const { resumeId } = req.params;
+        const updatedData = req.body.data;
+
+        const updatedResume = await Resume.findOneAndUpdate(
+            { resumeId: resumeId }, 
+            { $set: updatedData },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedResume) {
+            return res.status(404).json({ message: 'Resume not found' });
+        }
+
+        res.json({ message: 'Resume updated successfully', updatedResume });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating resume', error });
+    }
+};
+

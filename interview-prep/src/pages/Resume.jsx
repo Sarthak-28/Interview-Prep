@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid'; // Import uuid
+import { v4 as uuidv4 } from 'uuid'; 
+import { useUser } from "@clerk/clerk-react";
 import Header from '../components/Header';
 
 const Resume = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resumeTitle, setResumeTitle] = useState('');
+  const { user } = useUser();
   const navigate = useNavigate();
 
   const handleCreateResume = async () => {
     if (resumeTitle.trim()) {
-      const resumeId = uuidv4(); // Generate a unique resume ID using uuid
-      const userEmail = "user@example.com"; // Replace with actual user email
+      const resumeId = uuidv4(); 
+      const userEmail = user?.primaryEmailAddress?.emailAddress
 
       try {
         const response = await axios.post('http://localhost:5000/resume/create', {

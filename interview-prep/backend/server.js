@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const interviewRoutes = require("./routes/interviewRoutes");
-const resumeRoutes = require("./routes/resumeRoutes"); // Import the new resume routes
+const resumeRoutes = require("./routes/resumeRoutes"); 
 
 const app = express();
 const PORT = 5000;
