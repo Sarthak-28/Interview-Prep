@@ -3,63 +3,67 @@ import RichTextEditor from '../RichTextEditor';
 import { ResumeInfoContext } from '../../context/ResumeInfoContext';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, Plus, Minus } from 'lucide-react';
 
 function Experience() {
-  // Get the resumeInfo and updater from context
   const { resumeInfo, setResumeInfo } = useContext(ResumeInfoContext);
-  // Initialize local state with the context's experience if available; otherwise, an empty array.
+
   const [experienceList, setExperienceList] = useState(() => {
-    return (resumeInfo && resumeInfo.experience && resumeInfo.experience.length > 0)
+    return resumeInfo && resumeInfo.experience && resumeInfo.experience.length > 0
       ? resumeInfo.experience
-      : [];
+      : [
+          {
+            positionTitle: '',
+            companyName: '',
+            city: '',
+            state: '',
+            startDate: '',
+            endDate: '',
+            workSummary: '',
+          },
+        ];
   });
   const [loading, setLoading] = useState(false);
 
-  // Update the context whenever the local experienceList changes.
   useEffect(() => {
-    setResumeInfo(prev => ({ ...prev, Experience: experienceList }));
- }, [experienceList, setResumeInfo]);
- 
+    setResumeInfo(prev => ({ ...prev, experience: experienceList }));
+  }, [experienceList, setResumeInfo]);
 
-  // Handle changes in standard input fields
   const handleChange = (index, event) => {
     const { name, value } = event.target;
     const newEntries = [...experienceList];
-    // Ensure the entry exists (in case the array was empty)
     newEntries[index] = { ...newEntries[index], [name]: value };
     setExperienceList(newEntries);
   };
 
-  // Handler for the RichTextEditor changes
-  const handleRichTextEditor = (event, name, index) => {
+  const handleEditorChange = (index, event) => {
+    const newValue = event.target.value;
     const newEntries = [...experienceList];
-    newEntries[index] = { ...newEntries[index], [name]: event.target.value };
+    newEntries[index] = { ...newEntries[index], workSummary: newValue };
     setExperienceList(newEntries);
   };
 
-  // Add a new experience entry
   const AddNewExperience = () => {
-    setExperienceList(prev => [
-      ...prev,
-      {
-        title: '',
-        companyName: '',
-        city: '',
-        state: '',
-        startDate: '',
-        endDate: '',
-        workSummery: '',
-      },
-    ]);
+    const newExperience = {
+      positionTitle: '',
+      companyName: '',
+      city: '',
+      state: '',
+      startDate: '',
+      endDate: '',
+      workSummary: '',
+    };
+    setExperienceList([...experienceList, newExperience]);
   };
 
-  // Remove the last experience entry
   const RemoveExperience = () => {
-    setExperienceList(prev => prev.slice(0, -1));
+    if (experienceList.length <= 1) {
+      toast.info("At least one experience entry is required.");
+      return;
+    }
+    setExperienceList(experienceList.slice(0, -1));
   };
 
-  // Save changes to the backend
   const onSave = async () => {
     setLoading(true);
     const data = {
@@ -69,13 +73,14 @@ function Experience() {
     };
 
     try {
-      const response = await fetch(`http://localhost:5000/resume/updateResume/${resumeInfo.resumeId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await fetch(
+        `http://localhost:5000/resume/updateResume/${resumeInfo.resumeId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        }
+      );
       const result = await response.json();
       if (response.ok) {
         toast.success('Details updated!');
@@ -102,10 +107,11 @@ function Experience() {
                 <label className="text-xs">Position Title</label>
                 <input
                   type="text"
-                  name="title"
-                  value={item.title || ''}
+                  name="positionTitle"
+                  value={item.positionTitle || ''}
                   onChange={(event) => handleChange(index, event)}
                   className="border p-2 rounded w-full"
+                  required
                 />
               </div>
               {/* Company Name */}
@@ -117,6 +123,7 @@ function Experience() {
                   value={item.companyName || ''}
                   onChange={(event) => handleChange(index, event)}
                   className="border p-2 rounded w-full"
+                  required
                 />
               </div>
               {/* City */}
@@ -128,6 +135,7 @@ function Experience() {
                   value={item.city || ''}
                   onChange={(event) => handleChange(index, event)}
                   className="border p-2 rounded w-full"
+                  required
                 />
               </div>
               {/* State */}
@@ -139,6 +147,7 @@ function Experience() {
                   value={item.state || ''}
                   onChange={(event) => handleChange(index, event)}
                   className="border p-2 rounded w-full"
+                  required
                 />
               </div>
               {/* Start Date */}
@@ -150,6 +159,7 @@ function Experience() {
                   value={item.startDate || ''}
                   onChange={(event) => handleChange(index, event)}
                   className="border p-2 rounded w-full"
+                  required
                 />
               </div>
               {/* End Date */}
@@ -167,8 +177,8 @@ function Experience() {
               <div className="col-span-2">
                 <RichTextEditor
                   index={index}
-                  value={item.workSummery || ''}
-                  onRichTextEditorChange={(event) => handleRichTextEditor(event, 'workSummery', index)}
+                  value={item.workSummary || ''}
+                  onRichTextEditorChange={(e) => handleEditorChange(index, e)}
                 />
               </div>
             </div>

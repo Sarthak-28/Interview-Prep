@@ -18,7 +18,8 @@ import { AIChatSession } from './../../utils/ResumeAIModal';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const PROMPT = 'position titile: {positionTitle} , Depends on position title give me 5-7 bullet points for my experience in resume (Please do not add experince level and No JSON array) , give me result in HTML tags';
+const PROMPT =
+  'position titile: {positionTitle} , Depends on position title give me 5-7 bullet points for my experience in resume (Please do not add experince level and No JSON array) , give me result in HTML tags';
 
 function RichTextEditor({ onRichTextEditorChange, index, value: propValue }) {
   const [value, setValue] = useState(propValue || '');
@@ -31,30 +32,41 @@ function RichTextEditor({ onRichTextEditorChange, index, value: propValue }) {
   }, [propValue]);
 
   const GenerateSummeryFromAI = async () => {
-    // Use lowercase 'experience' for consistency.
-    if (!resumeInfo?.experience || !resumeInfo.experience[index]?.title) {
+    // Check using the correct field "positionTitle"
+    if (!resumeInfo?.experience || !resumeInfo.experience[index]?.positionTitle) {
       toast.error('Please Add Position Title');
       return;
     }
     setLoading(true);
-    const promptWithTitle = PROMPT.replace('{positionTitle}', resumeInfo.experience[index].title);
+    const promptWithTitle = PROMPT.replace(
+      '{positionTitle}',
+      resumeInfo.experience[index].positionTitle
+    );
     try {
       const result = await AIChatSession.sendMessage(promptWithTitle);
-      const text = result.response.text();
+      // Ensure we await the text() response if necessary.
+      const text = await result.response.text();
       let parsed;
+      let finalValue = "";
       try {
         parsed = JSON.parse(text);
-        if (parsed.bulletPoints && Array.isArray(parsed.bulletPoints)) {
-          const html = `<ul>${parsed.bulletPoints.map(point => `<li>${point}</li>`).join('')}</ul>`;
-          setValue(html);
-        } else if (parsed.bulletPoints && typeof parsed.bulletPoints === 'string') {
-          const html = `<ul><li>${parsed.bulletPoints}</li></ul>`;
-          setValue(html);
+        // Check both "bulletPoints" and "bullet_points"
+        const bulletPoints = parsed.bulletPoints || parsed.bullet_points;
+        if (bulletPoints && Array.isArray(bulletPoints)) {
+          finalValue = `<ul>${bulletPoints.map(point => `<li>${point}</li>`).join('')}</ul>`;
+        } else if (bulletPoints && typeof bulletPoints === 'string') {
+          finalValue = `<ul><li>${bulletPoints}</li></ul>`;
         } else {
-          setValue(text);
+          finalValue = text;
         }
       } catch (err) {
-        setValue(text);
+        // If JSON parsing fails, just use the raw text.
+        finalValue = text;
+      }
+      setValue(finalValue);
+      // Propagate the new HTML value using a synthetic event.
+      if (onRichTextEditorChange) {
+        onRichTextEditorChange({ target: { value: finalValue } });
       }
     } catch (error) {
       toast.error('Error generating summary from AI');
@@ -86,7 +98,9 @@ function RichTextEditor({ onRichTextEditorChange, index, value: propValue }) {
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
-            onRichTextEditorChange(e);
+            if (onRichTextEditorChange) {
+              onRichTextEditorChange(e);
+            }
           }}
         >
           <Toolbar>

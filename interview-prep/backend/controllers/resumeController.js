@@ -59,3 +59,16 @@ exports.updateResume = async (req, res) => {
     }
 };
 
+exports.getResumesByUser = async (req, res) => {
+  try {
+    const { userEmail } = req.params;  // Get userEmail from URL params
+    const resumes = await Resume.find({ userEmail });
+    if (!resumes || resumes.length === 0) {
+      return res.status(404).json({ message: "No resumes found for this user!" });
+    }
+    res.json(resumes);
+  } catch (error) {
+    console.error("Error fetching resumes for user:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

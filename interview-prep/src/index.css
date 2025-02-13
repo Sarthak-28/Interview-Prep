@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide non-essential elements during PDF generation/printing */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure resume content uses full page width */
+  #resume-content {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

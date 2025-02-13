@@ -3,10 +3,10 @@ import React, { useState, useRef } from 'react';
 const WebcamSection = () => {
   const [recording, setRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [recordedChunks, setRecordedChunks] = useState([]);
   const [recordedBlob, setRecordedBlob] = useState(null);
   const [showSavePrompt, setShowSavePrompt] = useState(false);
   const videoRef = useRef(null);
+  const chunksRef = useRef([]); // Use a ref to store recorded chunks
 
   // Start the webcam and recording
   const startRecording = async () => {
@@ -19,19 +19,18 @@ const WebcamSection = () => {
       
       const recorder = new MediaRecorder(stream);
       setMediaRecorder(recorder);
-      setRecordedChunks([]); // Reset previous recordings
+      chunksRef.current = []; // Reset the chunks array
 
       recorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
-          setRecordedChunks((prev) => prev.concat(event.data));
+          chunksRef.current.push(event.data);
         }
       };
 
       recorder.onstop = () => {
-        // Create a Blob from the recorded chunks
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        // Create a Blob from the recorded chunks stored in the ref
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
         setRecordedBlob(blob);
-        // Show prompt asking if the user wants to save the recording
         setShowSavePrompt(true);
       };
 
@@ -57,7 +56,6 @@ const WebcamSection = () => {
   // Handle saving the recording to the user's computer
   const handleSaveRecording = () => {
     if (recordedBlob) {
-      // Create a URL for the Blob and trigger a download
       const url = URL.createObjectURL(recordedBlob);
       const a = document.createElement('a');
       a.style.display = 'none';
@@ -65,7 +63,6 @@ const WebcamSection = () => {
       a.download = `interview_${new Date().toISOString()}.webm`;
       document.body.appendChild(a);
       a.click();
-      // Cleanup: revoke the object URL and hide the prompt
       URL.revokeObjectURL(url);
       setRecordedBlob(null);
       setShowSavePrompt(false);
@@ -84,7 +81,6 @@ const WebcamSection = () => {
         className="border-2 border-gray-300 rounded-lg flex items-center justify-center overflow-hidden"
         style={{ width: 300, height: 200 }}
       >
-        {/* Display live stream or nothing */}
         <video 
           ref={videoRef} 
           autoPlay 

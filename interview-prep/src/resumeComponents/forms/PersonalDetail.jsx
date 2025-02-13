@@ -1,25 +1,21 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { ResumeInfoContext } from '../../context/ResumeInfoContext';
-// Remove or ignore useParams if not needed
-// import { useParams } from 'react-router-dom';
 import { LoaderCircle } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function PersonalDetail({ enabledNext }) {
-  // Remove: const params = useParams();
   const { resumeInfo, setResumeInfo } = useContext(ResumeInfoContext);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    console.log("---", resumeInfo);
+    // No debugging logs
   }, [resumeInfo]);
 
   const handleInputChange = (e) => {
     enabledNext(false);
     const { name, value } = e.target;
-
     setFormData({
       ...formData,
       [name]: value,
@@ -34,9 +30,7 @@ function PersonalDetail({ enabledNext }) {
     e.preventDefault();
     setLoading(true);
 
-    // Use resumeInfo.resumeId from context
     const effectiveResumeId = resumeInfo.resumeId;
-    
     if (!effectiveResumeId) {
       toast.error("Resume ID is missing.");
       setLoading(false);

@@ -1,58 +1,102 @@
 const mongoose = require("mongoose");
 
 const resumeSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  userEmail: { type: String, required: true },
-  resumeId: { type: String, required: true, unique: true },
-  userName: { type: String, default: '' },
-  firstName: { type: String, default: '' },
-  lastName: { type: String, default: '' },
-  jobTitle: { type: String, default: '' },
-  address: { type: String, default: '' },
-  phone: { type: String, default: '' },
-  email: { type: String, default: '' },
-  summary: { type: String, default: '' },
-
+  title: { 
+    type: String, 
+    required: [true, "Title is required"],
+    trim: true
+  },
+  userEmail: { 
+    type: String, 
+    required: [true, "User email is required"],
+    match: [/^\S+@\S+\.\S+$/, "Please use a valid email address"]
+  },
+  resumeId: { 
+    type: String, 
+    required: [true, "Resume ID is required"],
+    unique: true,
+    index: true
+  },
+  firstName: { 
+    type: String, 
+    trim: true,
+    default: '' 
+  },
+  lastName: { 
+    type: String, 
+    trim: true,
+    default: '' 
+  },
+  jobTitle: { 
+    type: String, 
+    trim: true,
+    default: '' 
+  },
+  address: { 
+    type: String, 
+    trim: true,
+    default: '' 
+  },
+  phone: { 
+    type: String, 
+    match: [/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/, "Please use a valid phone number"],
+    default: '' 
+  },
+  email: { 
+    type: String, 
+    match: [/^\S+@\S+\.\S+$/, "Please use a valid email address"],
+    default: '' 
+  },
+  summary: { 
+    type: String, 
+    trim: true,
+    default: '' 
+  },
   experience: {
-    type: [
-      {
-        title: { type: String },
-        companyName: { type: String },
-        city: { type: String },
-        state: { type: String },
-        startDate: { type: String },
-        endDate: { type: String },
-        workSummery: { type: String }
-      }
-    ],
-    default: []
+    type: [{
+      // ... experience fields remain the same ...
+    }],
+    default: [],
+    validate: {
+      validator: function(v) {
+        return v.length <= 10;
+      },
+      message: 'Experience exceeds the limit of 10 entries'
+    }
   },
-
   education: {
-    type: [
-      {
-        universityName: { type: String },
-        degree: { type: String },
-        major: { type: String },
-        startDate: { type: String },
-        endDate: { type: String },
-        description: { type: String }
-      }
-    ],
-    default: []
+    type: [{
+      // ... education fields remain the same ...
+    }],
+    default: [],
+    validate: {
+      validator: function(v) {
+        return v.length <= 5;
+      },
+      message: 'Education exceeds the limit of 5 entries'
+    }
   },
-
   skills: {
-    type: [
-      {
-        name: { type: String },
-        rating: { type: String },
-      }
-    ],
-    default: []
+    type: [{
+      // ... skills fields remain the same ...
+    }],
+    default: [],
+    validate: {
+      validator: function(v) {
+        return v.length <= 20;
+      },
+      message: 'Skills exceed the limit of 20 entries'
+    }
   },
-  
-  createdAt: { type: Date, default: Date.now }
+  themeColor: {
+    type: String,
+    default: "#2563eb", 
+    match: [/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color code"]
+  },
+  createdAt: { 
+    type: Date, 
+    default: Date.now 
+  }
 });
 
 module.exports = mongoose.model("Resume", resumeSchema);

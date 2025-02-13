@@ -114,7 +114,17 @@ const QuestionPage = () => {
   };
 
   const handleFinishClick = async () => {
-    // (Your existing logic to check unanswered questions, save answers, etc.)
+    // Ensure the current answer is saved
+    saveCurrentAnswer();
+  
+    // Check for any unanswered questions (empty or whitespace-only answers)
+    const hasUnanswered = answers.some((answer) => answer.trim() === "");
+    if (hasUnanswered) {
+      setShowDialog(true);
+      return; // Stop submission until user confirms
+    }
+  
+    // If all questions are answered, proceed with the submission
     setIsSubmitting(true);
     try {
       const success = await saveAnswersToBackend();
@@ -123,7 +133,8 @@ const QuestionPage = () => {
         if (feedbackList) {
           const userAnswerSaved = await saveUserAnswerToBackend(mockId, feedbackList, user);
           if (userAnswerSaved) {
-            setIsInterviewSubmitted(true); // Mark as submitted
+            // Optionally mark the interview as submitted
+            setIsInterviewSubmitted(true);
             navigate("/feedbackpage", { state: { mockId } });
           }
         }
@@ -135,6 +146,8 @@ const QuestionPage = () => {
       setIsSubmitting(false);
     }
   };
+  
+  
   
 
   const handleDialogConfirm = async () => {
