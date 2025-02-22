@@ -72,3 +72,17 @@ exports.getResumesByUser = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+exports.deleteResume = async (req, res) => {
+  try {
+    const { resumeId } = req.params;
+    const deletedResume = await Resume.findOneAndDelete({ resumeId });
+    if (!deletedResume) {
+      return res.status(404).json({ message: "Resume not found" });
+    }
+    res.json({ message: "Resume deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting resume:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

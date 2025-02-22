@@ -7,6 +7,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import Header from '../components/Header';
 
+
 function ResumePreviewPage() {
   const { resumeId: routeResumeId } = useParams();
   const navigate = useNavigate();
@@ -15,10 +16,31 @@ function ResumePreviewPage() {
   const resumeRef = useRef(null);
   const [refReady, setRefReady] = useState(false);
 
+
+  // CSS to remove default print header/footer (in many modern browsers)
+  // and hide .no-print elements.
+  const PrintStyle = () => (
+    <style>
+      {`
+        @media print {
+          @page {
+            margin: 0;
+            size: letter;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}
+    </style>
+  );
+
+
   // Check if the resumeRef is attached
   useEffect(() => {
     if (resumeRef.current) setRefReady(true);
   }, []);
+
 
   // Fetch resume data if not available from context
   useEffect(() => {
@@ -36,6 +58,7 @@ function ResumePreviewPage() {
     }
   }, [resumeInfo, routeResumeId]);
 
+
   // Loading state while resume data is being fetched
   if (!resumeInfo) {
     return (
@@ -45,14 +68,20 @@ function ResumePreviewPage() {
     );
   }
 
+
   // Print handler
   const handlePrint = () => window.print();
 
+
   return (
     <ResumeInfoContext.Provider value={{ resumeInfo, setResumeInfo }}>
+      <PrintStyle /> {/* Inject our print style */}
+
+
       <div className="overflow-x-hidden">
-        {/* Full-width Header Section with Back Button */}
-        <div className="w-full no-print">
+        {/* Put Header & Back button inside a no-print container so they don't appear in print/PDF */}
+        <div className="no-print">
+          <Header />
           <div className="px-8 py-4">
             <button
               onClick={() => navigate('/resume')}
@@ -61,25 +90,25 @@ function ResumePreviewPage() {
               &larr; Back
             </button>
           </div>
-          <Header />
         </div>
 
-        {/* Centered Content Section */}
+
+        {/* Main Content Section */}
         <div className="p-8 max-w-4xl mx-auto">
-          {/* Non-PDF Elements */}
-          <div className="no-print">
-            <div className="my-10 text-center">
-              <h2 className="text-2xl font-medium">Your Resume is Ready! 🎉</h2>
-              <p className="text-gray-400 mt-2">Download your resume below.</p>
-            </div>
+          {/* This section also won't appear in print */}
+          <div className="no-print my-10 text-center">
+            <h2 className="text-2xl font-medium">Your Resume is Ready! 🎉</h2>
+            <p className="text-gray-400 mt-2">Download or print your resume below.</p>
           </div>
 
-          {/* Resume PDF Content */}
+
+          {/* Only the content in this ref will appear in the PDF */}
           <div ref={resumeRef} className="bg-white">
             <ResumePreview />
           </div>
 
-          {/* Action Buttons */}
+
+          {/* Action Buttons - also hidden in print */}
           <div className="no-print flex justify-center gap-4 mt-6">
             {refReady && (
               <ReactToPdf
@@ -110,4 +139,8 @@ function ResumePreviewPage() {
   );
 }
 
+
 export default ResumePreviewPage;
+
+
+

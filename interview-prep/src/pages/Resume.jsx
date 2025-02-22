@@ -6,7 +6,7 @@ import { useUser } from "@clerk/clerk-react";
 import Header from '../components/Header';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { MoreVertical, Edit as EditIcon } from 'lucide-react';
+import { Edit as EditIcon, Download as DownloadIcon, Trash2 } from 'lucide-react';
 
 const Resume = () => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -16,8 +16,9 @@ const Resume = () => {
   const { user } = useUser();
   const navigate = useNavigate();
 
-  // State to track which resume's dropdown is open (by resumeId)
-  const [activeDropdown, setActiveDropdown] = useState(null);
+  // New state for deletion
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [resumeToDelete, setResumeToDelete] = useState(null);
 
   useEffect(() => {
     const fetchResumes = async () => {
@@ -71,20 +72,39 @@ const Resume = () => {
       case 'Edit':
         navigate('/resume-builder', { state: { resumeId: resume.resumeId, initialData: resume } });
         break;
-      case 'View':
-        // Implement view functionality here.
-        break;
       case 'Download':
-        // Implement download functionality here.
+        // Navigate to ResumePreviewPage for downloading the resume
+        navigate(`/my-resume/${resume.resumeId}/view`);
         break;
       case 'Delete':
-        // Implement delete functionality here.
+        // Set the resume to delete and show confirmation modal
+        setResumeToDelete(resume.resumeId);
+        setShowDeleteConfirmation(true);
         break;
       default:
         break;
     }
-    // Close the dropdown after any action.
-    setActiveDropdown(null);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const response = await axios.delete(`http://localhost:5000/resume/deleteResume/${resumeToDelete}`);
+      if (response.status === 200) {
+        toast.success("Resume deleted successfully");
+        // Remove the deleted resume from state
+        setExistingResumes(existingResumes.filter(r => r.resumeId !== resumeToDelete));
+      }
+    } catch (error) {
+      toast.error("Failed to delete resume");
+    } finally {
+      setShowDeleteConfirmation(false);
+      setResumeToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirmation(false);
+    setResumeToDelete(null);
   };
 
   return (
@@ -94,7 +114,9 @@ const Resume = () => {
         {/* Header Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">My Resumes</h1>
-          <p className="text-sm text-gray-500">Start creating your AI-powered resume for your next job role</p>
+          <p className="text-sm text-gray-500">
+            Start creating your AI-powered resume for your next job role
+          </p>
         </div>
         {/* Resume Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -113,8 +135,41 @@ const Resume = () => {
               className="border border-gray-200 p-6 rounded-xl hover:shadow-lg transition transform hover:scale-105 cursor-pointer bg-white relative"
               onClick={() => navigate('/resume-builder', { state: { resumeId: resume.resumeId, initialData: resume } })}
             >
+              {/* Action Buttons */}
+              <div className="absolute top-2 right-2 flex gap-2">
+                <button
+                  onClick={(e) => { 
+                    e.stopPropagation();
+                    handleAction('Edit', resume);
+                  }}
+                  className="bg-blue-500 hover:bg-blue-600 text-white p-1 rounded"
+                  title="Edit"
+                >
+                  <EditIcon className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => { 
+                    e.stopPropagation();
+                    handleAction('Download', resume);
+                  }}
+                  className="bg-green-500 hover:bg-green-600 text-white p-1 rounded"
+                  title="Download"
+                >
+                  <DownloadIcon className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => { 
+                    e.stopPropagation();
+                    handleAction('Delete', resume);
+                  }}
+                  className="bg-red-500 hover:bg-red-600 text-white p-1 rounded"
+                  title="Delete"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+
               <div className="flex justify-center items-center h-48">
-                {/* Display an edit icon as a placeholder */}
                 <EditIcon className="w-16 h-16 text-gray-500" />
               </div>
               <div className="mt-4 text-center">
@@ -122,48 +177,6 @@ const Resume = () => {
                 <p className="text-sm text-gray-500">
                   Created: {new Date(resume.createdAt).toLocaleDateString()}
                 </p>
-              </div>
-              {/* Dropdown for actions */}
-              <div className="absolute top-2 right-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveDropdown(activeDropdown === resume.resumeId ? null : resume.resumeId);
-                  }}
-                  className="focus:outline-none"
-                >
-                  <MoreVertical className="w-6 h-6 text-gray-500 hover:text-gray-700" />
-                </button>
-                {activeDropdown === resume.resumeId && (
-                  <div className="absolute right-0 mt-2 w-36 bg-white shadow-md rounded p-2 z-10">
-                    <ul>
-                      <li 
-                        onClick={() => handleAction('Edit', resume)} 
-                        className="hover:bg-gray-100 p-2 cursor-pointer flex items-center gap-2"
-                      >
-                        <EditIcon className="w-4 h-4" /> Edit
-                      </li>
-                      <li 
-                        onClick={() => handleAction('View', resume)} 
-                        className="hover:bg-gray-100 p-2 cursor-pointer"
-                      >
-                        View
-                      </li>
-                      <li 
-                        onClick={() => handleAction('Download', resume)} 
-                        className="hover:bg-gray-100 p-2 cursor-pointer"
-                      >
-                        Download
-                      </li>
-                      <li 
-                        onClick={() => handleAction('Delete', resume)} 
-                        className="hover:bg-gray-100 p-2 cursor-pointer"
-                      >
-                        Delete
-                      </li>
-                    </ul>
-                  </div>
-                )}
               </div>
             </div>
           ))}
@@ -194,6 +207,34 @@ const Resume = () => {
                   className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg disabled:opacity-50"
                 >
                   {loading ? 'Creating...' : 'Create Resume'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirmation && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+              <h3 className="text-2xl font-semibold mb-4 text-gray-800">
+                Delete Resume
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete this resume? This action cannot be undone.
+              </p>
+              <div className="flex justify-between">
+                <button
+                  onClick={cancelDelete}
+                  className="w-1/2 mr-2 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 rounded-full transition-colors duration-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="w-1/2 ml-2 bg-red-500 hover:bg-red-600 text-white py-2 rounded-full transition-colors duration-300"
+                >
+                  Yes, Delete
                 </button>
               </div>
             </div>

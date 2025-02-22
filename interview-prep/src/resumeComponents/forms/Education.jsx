@@ -4,9 +4,10 @@ import { LoaderCircle } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+
 function Education() {
   const { resumeInfo, setResumeInfo } = useContext(ResumeInfoContext);
-  
+ 
   // Initialize educationalList from context if available; otherwise, use default values.
   const [educationalList, setEducationalList] = useState(() => {
     return resumeInfo && resumeInfo.education && resumeInfo.education.length > 0
@@ -22,8 +23,9 @@ function Education() {
           },
         ];
   });
-  
+ 
   const [loading, setLoading] = useState(false);
+
 
   const handleChange = (event, index) => {
     const newEntries = [...educationalList];
@@ -31,6 +33,7 @@ function Education() {
     newEntries[index][name] = value;
     setEducationalList(newEntries);
   };
+
 
   const AddNewEducation = () => {
     setEducationalList((prev) => [
@@ -46,9 +49,11 @@ function Education() {
     ]);
   };
 
+
   const RemoveEducation = () => {
     setEducationalList((prev) => prev.slice(0, -1));
   };
+
 
   const onSave = async () => {
     setLoading(true);
@@ -57,6 +62,7 @@ function Education() {
         education: educationalList.map(({ id, ...rest }) => rest),
       },
     };
+
 
     try {
       // Use resumeInfo.resumeId from context (update the endpoint if needed)
@@ -67,6 +73,7 @@ function Education() {
         },
         body: JSON.stringify(data),
       });
+
 
       const result = await response.json();
       if (response.ok) {
@@ -81,16 +88,19 @@ function Education() {
     }
   };
 
+
   // Update the context when educationalList changes.
   // Using a functional update avoids including resumeInfo in the dependency array.
   useEffect(() => {
     setResumeInfo((prev) => ({ ...prev, education: educationalList }));
   }, [educationalList, setResumeInfo]);
 
+
   return (
     <div className="p-5 shadow-lg rounded-lg border-t-4 border-t-primary mt-10">
       <h2 className="font-bold text-lg">Education</h2>
       <p>Add your educational details</p>
+
 
       <div>
         {educationalList.map((item, index) => (
@@ -160,17 +170,17 @@ function Education() {
         ))}
       </div>
 
+
       <div className="flex justify-between">
         <div className="flex gap-2">
           <button
             onClick={AddNewEducation}
-            className="border border-primary text-primary px-4 py-2 rounded hover:bg-primary hover:text-white transition-colors"
-          >
+            className="bg-white text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-500"      >
             + Add More Education
           </button>
           <button
             onClick={RemoveEducation}
-            className="border border-primary text-primary px-4 py-2 rounded hover:bg-primary hover:text-white transition-colors"
+            className="bg-white text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-500"
           >
             - Remove
           </button>
@@ -178,7 +188,7 @@ function Education() {
         <button
           disabled={loading}
           onClick={onSave}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 disabled:opacity-50"
+          className="bg-white text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-500"
         >
           {loading ? <LoaderCircle className="animate-spin" /> : 'Save'}
         </button>
@@ -188,4 +198,8 @@ function Education() {
   );
 }
 
+
 export default Education;
+
+
+
