@@ -64,7 +64,61 @@ function Experience() {
     setExperienceList(experienceList.slice(0, -1));
   };
 
+  // Validate each experience entry
+  const validateExperience = () => {
+    const errors = [];
+    const currentDate = new Date();
+    experienceList.forEach((exp, index) => {
+      if (!exp.positionTitle.trim()) {
+        errors.push(`Experience ${index + 1}: Position Title is required`);
+      }
+      if (!exp.companyName.trim()) {
+        errors.push(`Experience ${index + 1}: Company Name is required`);
+      }
+      if (!exp.city.trim()) {
+        errors.push(`Experience ${index + 1}: City is required`);
+      }
+      if (!exp.state.trim()) {
+        errors.push(`Experience ${index + 1}: State is required`);
+      }
+      if (!exp.startDate.trim()) {
+        errors.push(`Experience ${index + 1}: Start Date is required`);
+      }
+      if (!exp.workSummary.trim()) {
+        errors.push(`Experience ${index + 1}: Work Summary is required`);
+      }
+      // Check that start and end dates are not in the future
+      if (exp.startDate) {
+        const startDateObj = new Date(exp.startDate);
+        if (startDateObj > currentDate) {
+          errors.push(`Experience ${index + 1}: Start Date cannot be in the future`);
+        }
+      }
+      if (exp.endDate) {
+        const endDateObj = new Date(exp.endDate);
+        if (endDateObj > currentDate) {
+          errors.push(`Experience ${index + 1}: End Date cannot be in the future`);
+        }
+      }
+      // If endDate is provided, check that it is not before startDate
+      if (exp.startDate && exp.endDate) {
+        const start = new Date(exp.startDate);
+        const end = new Date(exp.endDate);
+        if (end < start) {
+          errors.push(`Experience ${index + 1}: End Date cannot be before Start Date`);
+        }
+      }
+    });
+    return errors;
+  };
+
   const onSave = async () => {
+    const errors = validateExperience();
+    if (errors.length > 0) {
+      errors.forEach(err => toast.error(err));
+      return;
+    }
+
     setLoading(true);
     const data = {
       data: {
@@ -93,6 +147,9 @@ function Experience() {
       setLoading(false);
     }
   };
+
+  // Get today's date in YYYY-MM-DD format for the max attribute
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div className="p-5 shadow-lg rounded-lg border-t-4 border-t-primary mt-10">
@@ -160,6 +217,7 @@ function Experience() {
                   onChange={(event) => handleChange(index, event)}
                   className="border p-2 rounded w-full"
                   required
+                  max={today}
                 />
               </div>
               {/* End Date */}
@@ -171,6 +229,7 @@ function Experience() {
                   value={item.endDate || ''}
                   onChange={(event) => handleChange(index, event)}
                   className="border p-2 rounded w-full"
+                  max={today}
                 />
               </div>
               {/* Work Summary via RichTextEditor */}

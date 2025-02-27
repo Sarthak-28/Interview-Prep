@@ -150,9 +150,10 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {interviews.map((interview) => (
                 <div
-                  key={interview._id}
-                  className="bg-gray-100 rounded-xl shadow-md border border-gray-200 p-5 hover:shadow-xl transition-shadow duration-300"
-                >
+                key={interview._id}
+                className="bg-gray-100 rounded-xl shadow-md border border-gray-200 p-5 hover:shadow-xl hover:shadow-blue-300 transition-shadow duration-200"
+              >
+              
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-xl font-semibold text-gray-700">
                       {interview.jobPosition}

@@ -26,8 +26,46 @@ function PersonalDetail({ enabledNext }) {
     });
   };
 
+  // Validate required fields and correct formats
+  const validateForm = () => {
+    const { firstName, lastName, jobTitle, address, phone, email } = resumeInfo;
+    const errors = [];
+    if (!firstName?.trim()) errors.push("First name is required");
+    if (!lastName?.trim()) errors.push("Last name is required");
+    if (!jobTitle?.trim()) errors.push("Job title is required");
+    if (!address?.trim()) errors.push("Address is required");
+    if (!phone?.trim()) errors.push("Phone is required");
+    if (!email?.trim()) errors.push("Email is required");
+
+    // Validate that names contain only letters, spaces, apostrophes, and hyphens
+    const nameRegex = /^[A-Za-z\s'-]+$/;
+    if (firstName && !nameRegex.test(firstName)) {
+      errors.push("First name can only contain letters, spaces, apostrophes, and hyphens");
+    }
+    if (lastName && !nameRegex.test(lastName)) {
+      errors.push("Last name can only contain letters, spaces, apostrophes, and hyphens");
+    }
+
+    // Check email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email && !emailRegex.test(email)) errors.push("Invalid email address");
+
+    // Check phone format (allowing numbers, spaces, +, (, ) and hyphens)
+    const phoneRegex = /^[0-9+\s()-]+$/;
+    if (phone && !phoneRegex.test(phone)) errors.push("Invalid phone number");
+
+    return errors;
+  };
+
   const onSave = async (e) => {
     e.preventDefault();
+
+    const errors = validateForm();
+    if (errors.length > 0) {
+      errors.forEach((error) => toast.error(error));
+      return;
+    }
+
     setLoading(true);
 
     const effectiveResumeId = resumeInfo.resumeId;

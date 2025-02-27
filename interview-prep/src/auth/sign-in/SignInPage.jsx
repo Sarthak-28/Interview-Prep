@@ -14,9 +14,9 @@ function SignInPage() {
             className="w-100 h-100 object-cover"
           />
           {/* Top Gradient */}
-          <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-blue-100 to-transparent"></div>
+          <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-blue-200 to-transparent"></div>
           {/* Bottom Gradient */}
-          <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-blue-100 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-blue-200 to-transparent"></div>
         </div>
 
         {/* Right Section: Login Form */}
@@ -28,9 +28,9 @@ function SignInPage() {
             <SignIn afterSignInUrl="/dashboard" />
           </div>
           {/* Top Gradient */}
-          <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-blue-100 to-transparent"></div>
+          <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-blue-200 to-transparent"></div>
           {/* Bottom Gradient */}
-          <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-blue-100 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-blue-200 to-transparent"></div>
         </div>
       </div>
     </div>

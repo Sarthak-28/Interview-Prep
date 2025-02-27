@@ -7,7 +7,7 @@ import SignInPage from './auth/sign-in/SignInPage.jsx';
 import SignUpPage from './auth/sign-up/SignUpPage.jsx';
 import { ClerkProvider } from '@clerk/clerk-react';
 import LandingPage from './pages/LandingPage.jsx';
-import Loader from './components/Loader'; // 
+import Loader from './components/Loader'; 
 import ResumeBuilder from './pages/ResumeBuilder.jsx';
 import ResumePreviewPage from './pages/ResumePreviewPage.jsx'; 
 
@@ -16,7 +16,9 @@ const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const Resume = lazy(() => import('./pages/Resume.jsx'));
 const InterviewPage = lazy(() => import('./pages/InterviewPage.jsx'));
 const QuestionsPage = lazy(() => import('./pages/QuestionPage.jsx'));
-const FeedbackPage = lazy(() => import('./pages/FeedbackPage.jsx')); // Add FeedbackPage
+const FeedbackPage = lazy(() => import('./pages/FeedbackPage.jsx')); 
+const ServicesPage = lazy(() => import('./pages/ServicesPage.jsx'));
+const ContactPage = lazy(() => import('./pages/ContactPage.jsx'));
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -48,6 +50,22 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: 'services',
+    element: (
+      <Suspense fallback={<Loader />}>
+        <ServicesPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: 'contact',
+    element: (
+      <Suspense fallback={<Loader />}>
+        <ContactPage />
+      </Suspense>
+    ),
+  },
+  {
     path: 'resume-builder',
     element: (
       <Suspense fallback={<Loader />}>
@@ -56,7 +74,6 @@ const router = createBrowserRouter([
     ),
   },
   {
-    // New route for resume preview
     path: '/my-resume/:resumeId/view',
     element: <Suspense fallback={<Loader />}><ResumePreviewPage /></Suspense>,
   },

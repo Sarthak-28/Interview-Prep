@@ -4,7 +4,6 @@ import { LoaderCircle } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
 function Education() {
   const { resumeInfo, setResumeInfo } = useContext(ResumeInfoContext);
  
@@ -26,6 +25,8 @@ function Education() {
  
   const [loading, setLoading] = useState(false);
 
+  // Get today's date in YYYY-MM-DD format for the max attribute
+  const today = new Date().toISOString().split("T")[0];
 
   const handleChange = (event, index) => {
     const newEntries = [...educationalList];
@@ -33,7 +34,6 @@ function Education() {
     newEntries[index][name] = value;
     setEducationalList(newEntries);
   };
-
 
   const AddNewEducation = () => {
     setEducationalList((prev) => [
@@ -49,13 +49,58 @@ function Education() {
     ]);
   };
 
-
   const RemoveEducation = () => {
+    if (educationalList.length <= 1) {
+      toast.info("At least one education entry is required.");
+      return;
+    }
     setEducationalList((prev) => prev.slice(0, -1));
   };
 
+  // Validate each education entry
+  const validateEducation = () => {
+    const errors = [];
+    const currentDate = new Date();
+    educationalList.forEach((edu, index) => {
+      if (!edu.universityName.trim()) {
+        errors.push(`Education ${index + 1}: University Name is required`);
+      }
+      if (!edu.degree.trim()) {
+        errors.push(`Education ${index + 1}: Degree is required`);
+      }
+      if (!edu.major.trim()) {
+        errors.push(`Education ${index + 1}: Major is required`);
+      }
+      if (!edu.startDate.trim()) {
+        errors.push(`Education ${index + 1}: Start Date is required`);
+      } else {
+        const startDateObj = new Date(edu.startDate);
+        if (startDateObj > currentDate) {
+          errors.push(`Education ${index + 1}: Start Date cannot be in the future`);
+        }
+      }
+      if (edu.endDate.trim()) {
+        const endDateObj = new Date(edu.endDate);
+        if (endDateObj > currentDate) {
+          errors.push(`Education ${index + 1}: End Date cannot be in the future`);
+        }
+        if (edu.startDate.trim()) {
+          const startDateObj = new Date(edu.startDate);
+          if (endDateObj < startDateObj) {
+            errors.push(`Education ${index + 1}: End Date cannot be before Start Date`);
+          }
+        }
+      }
+    });
+    return errors;
+  };
 
   const onSave = async () => {
+    const errors = validateEducation();
+    if (errors.length > 0) {
+      errors.forEach(err => toast.error(err));
+      return;
+    }
     setLoading(true);
     const data = {
       data: {
@@ -63,9 +108,7 @@ function Education() {
       },
     };
 
-
     try {
-      // Use resumeInfo.resumeId from context (update the endpoint if needed)
       const response = await fetch(`http://localhost:5000/resume/updateResume/${resumeInfo.resumeId}`, {
         method: 'PUT',
         headers: {
@@ -73,7 +116,6 @@ function Education() {
         },
         body: JSON.stringify(data),
       });
-
 
       const result = await response.json();
       if (response.ok) {
@@ -88,19 +130,15 @@ function Education() {
     }
   };
 
-
   // Update the context when educationalList changes.
-  // Using a functional update avoids including resumeInfo in the dependency array.
   useEffect(() => {
     setResumeInfo((prev) => ({ ...prev, education: educationalList }));
   }, [educationalList, setResumeInfo]);
-
 
   return (
     <div className="p-5 shadow-lg rounded-lg border-t-4 border-t-primary mt-10">
       <h2 className="font-bold text-lg">Education</h2>
       <p>Add your educational details</p>
-
 
       <div>
         {educationalList.map((item, index) => (
@@ -144,6 +182,7 @@ function Education() {
                   onChange={(e) => handleChange(e, index)}
                   defaultValue={item?.startDate || ''}
                   className="border p-2 rounded w-full"
+                  max={today}
                 />
               </div>
               <div>
@@ -154,6 +193,7 @@ function Education() {
                   onChange={(e) => handleChange(e, index)}
                   defaultValue={item?.endDate || ''}
                   className="border p-2 rounded w-full"
+                  max={today}
                 />
               </div>
               <div className="col-span-2">
@@ -170,12 +210,12 @@ function Education() {
         ))}
       </div>
 
-
       <div className="flex justify-between">
         <div className="flex gap-2">
           <button
             onClick={AddNewEducation}
-            className="bg-white text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-500"      >
+            className="bg-white text-blue-500 hover:bg-blue-500 hover:text-white border border-blue-500"
+          >
             + Add More Education
           </button>
           <button
@@ -198,8 +238,4 @@ function Education() {
   );
 }
 
-
 export default Education;
-
-
-
