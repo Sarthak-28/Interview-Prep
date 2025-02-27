@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const resumeSchema = new mongoose.Schema({
   title: { 
@@ -39,7 +39,7 @@ const resumeSchema = new mongoose.Schema({
   },
   phone: { 
     type: String, 
-    match: [/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/, "Please use a valid phone number"],
+    match: [/^[1-9]\d{9}$/, "Phone number must be exactly 10 digits and not start with 0"],
     default: '' 
   },
   email: { 
@@ -88,10 +88,18 @@ const resumeSchema = new mongoose.Schema({
       message: 'Skills exceed the limit of 20 entries'
     }
   },
+  hobbies: {
+    type: [String],
+    default: []
+  },
   themeColor: {
     type: String,
     default: "#2563eb", 
     match: [/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid color code"]
+  },
+  dob: {
+    type: Date,
+    // required: [true, "Date of Birth is required"]
   },
   createdAt: { 
     type: Date, 

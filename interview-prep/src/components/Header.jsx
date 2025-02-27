@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Logo from "./../assets/Images/PathLogo.png";
-import { FaTimes, FaBars } from "react-icons/fa";
+import { FaTimes, FaBars, FaBirthdayCake } from "react-icons/fa";
 import { useUser, UserButton } from "@clerk/clerk-react";
 
 const Header = () => {
@@ -93,3 +93,6 @@ const Header = () => {
 };
 
 export default Header;
+
+
+

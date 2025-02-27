@@ -7,24 +7,24 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function Skills() {
-  // Initialize skillsList once using the value from context (if available)
   const { resumeInfo, setResumeInfo } = useContext(ResumeInfoContext);
   const [skillsList, setSkillsList] = useState(() => {
     return resumeInfo?.skills || [{ name: '', rating: 0 }];
   });
+  const [hobbiesList, setHobbiesList] = useState(() => {
+    return resumeInfo?.hobbies || [""];
+  });
   const [loading, setLoading] = useState(false);
 
-  // Removed the effect that resets skillsList from resumeInfo to prevent the loop.
-  // useEffect(() => {
-  //   if (resumeInfo && resumeInfo.skills) {
-  //     setSkillsList(resumeInfo.skills);
-  //   }
-  // }, [resumeInfo]);
-
-  // Update resume context whenever skillsList changes using a functional update.
+  // Update resume context whenever skillsList changes.
   useEffect(() => {
     setResumeInfo(prev => ({ ...prev, skills: skillsList }));
   }, [skillsList, setResumeInfo]);
+
+  // Update resume context whenever hobbiesList changes.
+  useEffect(() => {
+    setResumeInfo(prev => ({ ...prev, hobbies: hobbiesList }));
+  }, [hobbiesList, setResumeInfo]);
 
   const handleChange = (index, name, value) => {
     const newEntries = [...skillsList];
@@ -43,11 +43,30 @@ function Skills() {
     setSkillsList(prev => prev.slice(0, -1));
   };
 
+  const handleHobbyChange = (index, value) => {
+    const newHobbies = [...hobbiesList];
+    newHobbies[index] = value;
+    setHobbiesList(newHobbies);
+  };
+
+  const addNewHobby = () => {
+    setHobbiesList(prev => [...prev, ""]);
+  };
+
+  const removeHobby = () => {
+    if (hobbiesList.length <= 1) {
+      toast.info("At least one hobby is required.");
+      return;
+    }
+    setHobbiesList(prev => prev.slice(0, -1));
+  };
+
   const onSave = async () => {
     setLoading(true);
     const data = {
       data: {
         skills: skillsList.map(({ id, ...rest }) => rest),
+        hobbies: hobbiesList
       },
     };
 
@@ -77,6 +96,40 @@ function Skills() {
 
   return (
     <div className="p-5 shadow-lg rounded-lg border-t-4 border-t-primary mt-10">
+      {/* Hobbies Section */}
+      <div className="mb-8">
+        <h2 className="font-bold text-lg">Hobbies</h2>
+        <p>Add your hobbies</p>
+        <div className="mt-4">
+          {hobbiesList.map((hobby, index) => (
+            <div key={index} className="mb-2">
+              <input
+                type="text"
+                value={hobby}
+                onChange={(e) => handleHobbyChange(index, e.target.value)}
+                className="border p-2 rounded w-full"
+                placeholder="Enter a hobby"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between mt-4">
+          <div className="flex gap-2">
+            <button
+              onClick={addNewHobby}
+              className="border border-blue-500 text-blue-500 px-4 py-2 rounded hover:bg-blue-500 hover:text-white transition-colors"
+            >
+              + Add More Hobby
+            </button>
+            <button
+              onClick={removeHobby}
+              className="border border-blue-500 text-blue-500 px-4 py-2 rounded hover:bg-blue-500 hover:text-white transition-colors"
+            >
+              - Remove
+            </button>
+          </div>
+        </div>
+      </div>
       <h2 className="font-bold text-lg">Skills</h2>
       <p>Add your top professional key skills</p>
 
@@ -121,6 +174,11 @@ function Skills() {
             - Remove
           </button>
         </div>
+      </div>
+      
+      
+
+      <div className="flex justify-end mt-6">
         <button
           disabled={loading}
           onClick={onSave}

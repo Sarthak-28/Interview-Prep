@@ -28,7 +28,7 @@ function PersonalDetail({ enabledNext }) {
 
   // Validate required fields and correct formats
   const validateForm = () => {
-    const { firstName, lastName, jobTitle, address, phone, email } = resumeInfo;
+    const { firstName, lastName, jobTitle, address, phone, email, dob } = resumeInfo;
     const errors = [];
     if (!firstName?.trim()) errors.push("First name is required");
     if (!lastName?.trim()) errors.push("Last name is required");
@@ -36,6 +36,7 @@ function PersonalDetail({ enabledNext }) {
     if (!address?.trim()) errors.push("Address is required");
     if (!phone?.trim()) errors.push("Phone is required");
     if (!email?.trim()) errors.push("Email is required");
+    if (!dob) errors.push("Date of Birth is required");
 
     // Validate that names contain only letters, spaces, apostrophes, and hyphens
     const nameRegex = /^[A-Za-z\s'-]+$/;
@@ -50,9 +51,11 @@ function PersonalDetail({ enabledNext }) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (email && !emailRegex.test(email)) errors.push("Invalid email address");
 
-    // Check phone format (allowing numbers, spaces, +, (, ) and hyphens)
-    const phoneRegex = /^[0-9+\s()-]+$/;
-    if (phone && !phoneRegex.test(phone)) errors.push("Invalid phone number");
+    // Check phone format: exactly 10 digits and not starting with 0.
+    const phoneRegex = /^[1-9]\d{9}$/;
+    if (phone && !phoneRegex.test(phone)) {
+      errors.push("Phone number must be exactly 10 digits and not start with 0");
+    }
 
     return errors;
   };
@@ -99,6 +102,11 @@ function PersonalDetail({ enabledNext }) {
     }
   };
 
+  // Prepare default value for DOB input (in YYYY-MM-DD format)
+  const dobDefaultValue = resumeInfo?.dob
+    ? new Date(resumeInfo.dob).toISOString().split("T")[0]
+    : '';
+
   return (
     <div className="p-5 shadow-lg rounded-lg border-t-4 border-t-primary mt-10">
       <h2 className="font-bold text-lg">Personal Detail</h2>
@@ -107,7 +115,9 @@ function PersonalDetail({ enabledNext }) {
       <form onSubmit={onSave}>
         <div className="grid grid-cols-2 mt-5 gap-3">
           <div>
-            <label className="text-sm">First Name</label>
+            <label className="text-sm">
+              First Name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="firstName"
@@ -118,7 +128,9 @@ function PersonalDetail({ enabledNext }) {
             />
           </div>
           <div>
-            <label className="text-sm">Last Name</label>
+            <label className="text-sm">
+              Last Name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="lastName"
@@ -128,8 +140,25 @@ function PersonalDetail({ enabledNext }) {
               className="border p-2 rounded w-full"
             />
           </div>
+
+          <div className="grid grid-cols-1 mt-2 gap-1">
+            <label className="text-sm">
+              Date of Birth <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              name="dob"
+              defaultValue={dobDefaultValue}
+              required
+              onChange={handleInputChange}
+              className="border p-2 rounded w-full"
+            />
+          </div>
+
           <div className="col-span-2">
-            <label className="text-sm">Job Title</label>
+            <label className="text-sm">
+              Job Title <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="jobTitle"
@@ -140,7 +169,9 @@ function PersonalDetail({ enabledNext }) {
             />
           </div>
           <div className="col-span-2">
-            <label className="text-sm">Address</label>
+            <label className="text-sm">
+              Address <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="address"
@@ -151,7 +182,9 @@ function PersonalDetail({ enabledNext }) {
             />
           </div>
           <div>
-            <label className="text-sm">Phone</label>
+            <label className="text-sm">
+              Phone <span className="text-red-500">*</span>
+            </label>
             <input
               type="tel"
               name="phone"
@@ -162,7 +195,9 @@ function PersonalDetail({ enabledNext }) {
             />
           </div>
           <div>
-            <label className="text-sm">Email</label>
+            <label className="text-sm">
+              Email <span className="text-red-500">*</span>
+            </label>
             <input
               type="email"
               name="email"

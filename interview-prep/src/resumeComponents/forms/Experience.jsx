@@ -161,7 +161,9 @@ function Experience() {
             <div className="grid grid-cols-2 gap-3 border p-3 my-5 rounded-lg">
               {/* Position Title */}
               <div>
-                <label className="text-xs">Position Title</label>
+                <label className="text-xs">
+                  Position Title <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="positionTitle"
@@ -173,7 +175,9 @@ function Experience() {
               </div>
               {/* Company Name */}
               <div>
-                <label className="text-xs">Company Name</label>
+                <label className="text-xs">
+                  Company Name <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="companyName"
@@ -185,7 +189,9 @@ function Experience() {
               </div>
               {/* City */}
               <div>
-                <label className="text-xs">City</label>
+                <label className="text-xs">
+                  City <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="city"
@@ -197,7 +203,9 @@ function Experience() {
               </div>
               {/* State */}
               <div>
-                <label className="text-xs">State</label>
+                <label className="text-xs">
+                  State <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="state"
@@ -209,7 +217,9 @@ function Experience() {
               </div>
               {/* Start Date */}
               <div>
-                <label className="text-xs">Start Date</label>
+                <label className="text-xs">
+                  Start Date <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="date"
                   name="startDate"
@@ -234,6 +244,9 @@ function Experience() {
               </div>
               {/* Work Summary via RichTextEditor */}
               <div className="col-span-2">
+                <label className="text-xs">
+                  Work Summary <span className="text-red-500">*</span>
+                </label>
                 <RichTextEditor
                   index={index}
                   value={item.workSummary || ''}

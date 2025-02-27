@@ -145,7 +145,9 @@ function Education() {
           <div key={index}>
             <div className="grid grid-cols-2 gap-3 border p-3 my-5 rounded-lg">
               <div className="col-span-2">
-                <label>University Name</label>
+                <label>
+                  University Name <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="universityName"
@@ -155,7 +157,9 @@ function Education() {
                 />
               </div>
               <div>
-                <label>Degree</label>
+                <label>
+                  Degree <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="degree"
@@ -165,7 +169,9 @@ function Education() {
                 />
               </div>
               <div>
-                <label>Major</label>
+                <label>
+                  Major <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="major"
@@ -175,7 +181,9 @@ function Education() {
                 />
               </div>
               <div>
-                <label>Start Date</label>
+                <label>
+                  Start Date <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="date"
                   name="startDate"

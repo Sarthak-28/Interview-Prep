@@ -6,7 +6,6 @@ import { useUser } from "@clerk/clerk-react";
 import { Rating } from "@smastrom/react-rating";
 import { Trash2, Eye, RefreshCcw } from "lucide-react";
 
-
 const Dashboard = () => {
   const { user } = useUser();
   const [showCard, setShowCard] = useState(false);
@@ -17,13 +16,11 @@ const Dashboard = () => {
   const [interviewToDelete, setInterviewToDelete] = useState(null);
   const navigate = useNavigate();
 
-
   useEffect(() => {
     if (user) {
       fetchUserInterviews();
     }
   }, [user]);
-
 
   const fetchUserInterviews = async () => {
     try {
@@ -32,16 +29,10 @@ const Dashboard = () => {
           user?.primaryEmailAddress?.emailAddress
         )}`
       );
-
-
       if (!response.ok) {
         throw new Error("Failed to fetch user interviews");
       }
-
-
       const data = await response.json();
-
-
       if (data.length === 0) {
         setInterviews([]);
       } else {
@@ -59,12 +50,10 @@ const Dashboard = () => {
     }
   };
 
-
   const handleDeleteInterview = (interviewId) => {
     setInterviewToDelete(interviewId);
     setShowDeleteConfirmation(true);
   };
-
 
   const confirmDelete = async () => {
     if (interviewToDelete) {
@@ -74,8 +63,6 @@ const Dashboard = () => {
           { method: "DELETE" }
         );
         if (!response.ok) throw new Error("Failed to delete interview");
-
-
         // Refresh the interview list
         await fetchUserInterviews();
         // Replace the current history entry to avoid stale pages via back button
@@ -87,12 +74,23 @@ const Dashboard = () => {
     }
   };
 
-
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);
     setInterviewToDelete(null);
   };
 
+  // Helper function to format date strings from "DD-MM-YYYY" to a proper Date format
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    // Split the date assuming format is DD-MM-YYYY
+    const parts = dateString.split("-");
+    if (parts.length !== 3) return "Invalid Date";
+    const [day, month, year] = parts;
+    // Create a new date string in "YYYY-MM-DD" format which is parsable by JS Date
+    const formattedDateString = `${year}-${month}-${day}`;
+    const dateObj = new Date(formattedDateString);
+    return isNaN(dateObj) ? "Invalid Date" : dateObj.toLocaleDateString();
+  };
 
   if (loading) {
     return (
@@ -102,7 +100,6 @@ const Dashboard = () => {
     );
   }
 
-
   if (error) {
     return (
       <div className="text-red-500 text-center mt-10 text-xl font-medium">
@@ -110,7 +107,6 @@ const Dashboard = () => {
       </div>
     );
   }
-
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -136,7 +132,6 @@ const Dashboard = () => {
           )}
         </section>
 
-
         {/* Previous Interviews Section */}
         <section className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
           <h2 className="text-3xl font-bold text-gray-800 mb-6">
@@ -150,10 +145,9 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {interviews.map((interview) => (
                 <div
-                key={interview._id}
-                className="bg-gray-100 rounded-xl shadow-md border border-gray-200 p-5 hover:shadow-xl hover:shadow-blue-300 transition-shadow duration-200"
-              >
-              
+                  key={interview._id}
+                  className="bg-gray-100 rounded-xl shadow-md border border-gray-200 p-5 hover:shadow-xl hover:shadow-blue-300 transition-shadow duration-200"
+                >
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-xl font-semibold text-gray-700">
                       {interview.jobPosition}
@@ -176,7 +170,7 @@ const Dashboard = () => {
                     Experience: {interview.jobExperience} years
                   </p>
                   <p className="text-gray-600 text-sm mb-1">
-                    Date: {new Date(interview.createdAt).toLocaleDateString()}
+                    Date: {formatDate(interview.createdAt)}
                   </p>
                   <p className="text-gray-600 text-sm mb-3">
                     {interview.jobDesc.length > 100
@@ -222,7 +216,6 @@ const Dashboard = () => {
         </section>
       </main>
 
-
       {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -255,8 +248,4 @@ const Dashboard = () => {
   );
 };
 
-
 export default Dashboard;
-
-
-
